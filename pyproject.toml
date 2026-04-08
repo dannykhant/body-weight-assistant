@@ -1,0 +1,14 @@
+[project]
+name = "body-weight-assistant"
+version = "0.1.0"
+description = "AI Body Weight Assistant"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "google-adk>=1.28.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
