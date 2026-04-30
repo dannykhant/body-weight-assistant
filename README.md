@@ -16,6 +16,7 @@ The **Body Weight Assistant** leverages a sophisticated **Single-Orchestrator Ar
 - **Personalized Assessment**: Collects 7 key fitness metrics including weight, target goals, activity levels, and dietary preferences.
 - **Automated Background Research**: Uses Google Search to retrieve authoritative nutritional and exercise data tailored to individual metrics.
 - **Intelligent Synthesis**: Synthesizes raw research into a comprehensive weekly meal and workout strategy.
+- **Safety Guardrails**: Automatically audits plans for health risks (extreme calories, dangerous routines) with a feedback loop for revisions.
 - **Stateful Orchestration**: 
   - **Resume Capability**: Automatically detects where the user left off if a session is interrupted.
   - **Human-in-the-Loop**: Pauses for user approval after research synthesis before finalizing the guide.
@@ -31,6 +32,7 @@ The system is powered by **Gemini 2.5 Flash** and organized into several modular
 | **`input_form_agent`** | Ensures all required metrics are gathered accurately. |
 | **`google_search_agent`** | Retrieves real-world benchmarks and data points. |
 | **`research_agent`** | Synthesizes complex data into a personalized strategy. |
+| **`guardrail_agent`** | Audits synthesized plans for safety and health risks. |
 | **`response_formatter_agent`** | Polishes and formats the final plan for user consumption. |
 
 ## 📂 Project Structure

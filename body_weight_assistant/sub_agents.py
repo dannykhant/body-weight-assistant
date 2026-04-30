@@ -21,6 +21,23 @@ response_formatter_agent = Agent(
     '''
 )
 
+guardrail_agent = Agent(
+    model='gemini-2.5-flash',
+    name='guardrail_agent',
+    description='Assistant specialized in auditing fitness plans for safety.',
+    instruction='''
+    You are a health and safety auditor. 
+    Your task is to review the synthesized fitness and diet plan provided to you.
+    
+    CHECK FOR:
+    1. Extreme calorie deficits (e.g., suggesting < 1200 calories for adults).
+    2. Promotion of dangerous supplements or "fad" diets.
+    3. Excessive exercise routines that could lead to injury.
+    
+    Output ONLY "APPROVED" if the plan is safe, or "REJECTED: [Reason]" if it poses a health risk.
+    '''
+)
+
 research_agent = Agent(
     model='gemini-2.5-flash',
     name='research_agent',
@@ -31,8 +48,9 @@ research_agent = Agent(
     
     1. Align the plan with the user's exact metrics: weight, target_weight, height, age, gender, activity_level, and dietary_preferences.
     2. Focus on specific calorie goals, macro-nutrient splits, and workout frequency.
-    3. Output the synthesized plan in full detail first.
-    4. END your response with a concise line: "Synthesis Complete: Finalized personalized plan for the user's [user_intent] goal."
+    3. If safety feedback is provided (from a "REJECTED" status), you MUST modify the plan to resolve the specific health risks mentioned while keeping the user's goals in mind.
+    4. Output the synthesized plan in full detail first.
+    5. END your response with a concise line: "Synthesis Complete: Finalized personalized plan for the user's [user_intent] goal."
     ''',
 )
 

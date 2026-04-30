@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 
-from body_weight_assistant.sub_agents import input_form_agent, research_agent, response_formatter_agent, google_search_agent
+from body_weight_assistant.sub_agents import input_form_agent, research_agent, response_formatter_agent, google_search_agent, guardrail_agent
 from body_weight_assistant.agent import root_agent
 from body_weight_assistant.models import UserInfoForm
 from body_weight_assistant.tools import (
@@ -23,12 +23,21 @@ def test_input_form_agent_configuration():
 
 def test_google_search_agent_configuration():
     assert google_search_agent.name == "google_search_agent"
+    assert google_search_agent.model == "gemini-2.5-flash"
     assert google_search in google_search_agent.tools
 
 def test_research_agent_configuration():
     assert research_agent.name == "research_agent"
     assert research_agent.model == "gemini-2.5-flash"
+    assert "rejected" in research_agent.instruction.lower()
     assert len(research_agent.tools) == 0
+
+def test_guardrail_agent_configuration():
+    assert guardrail_agent.name == "guardrail_agent"
+    assert guardrail_agent.model == "gemini-2.5-flash"
+    assert "safety auditor" in guardrail_agent.instruction.lower()
+    assert "APPROVED" in guardrail_agent.instruction
+    assert "REJECTED" in guardrail_agent.instruction
 
 def test_response_formatter_agent_configuration():
     assert response_formatter_agent.name == "response_formatter_agent"
@@ -52,6 +61,7 @@ def test_root_agent_configuration():
     assert "input_form_agent" in agent_tool_names
     assert "google_search_agent" in agent_tool_names
     assert "research_agent" in agent_tool_names
+    assert "guardrail_agent" in agent_tool_names
     assert "response_formatter_agent" in agent_tool_names
 
 # Logic & Status Tests
@@ -67,6 +77,33 @@ def test_check_process_status_resume_input_form():
     result = check_process_status(mock_context)
     assert result["action"] == "resume"
     assert result["next_step_to_execute"] == "input_form_agent"
+
+def test_check_process_status_resume_google_search():
+    mock_context = MagicMock()
+    mock_context.state = {
+        "prompt": "Lose weight",
+        "user_info": "weight: 80, target: 75"
+    }
+    result = check_process_status(mock_context)
+    assert result["action"] == "resume"
+    assert result["next_step_to_execute"] == "google_search_agent"
+
+def test_check_process_status_resume_research():
+    mock_context = MagicMock()
+    mock_context.state = {
+        "prompt": "Lose weight",
+        "user_info": "weight: 80, target: 75",
+        "search_results": "High protein diets found"
+    }
+    result = check_process_status(mock_context)
+    assert result["action"] == "resume"
+    assert result["next_step_to_execute"] == "research_agent"
+
+def test_check_process_status_completed():
+    mock_context = MagicMock()
+    mock_context.state = {"user_info": "...", "research_findings": "...", "formatted_plan": "..."}
+    result = check_process_status(mock_context)
+    assert result["action"] == "completed"
 
 def test_check_process_status_pending_approval():
     mock_context = MagicMock()
@@ -90,6 +127,18 @@ def test_collect_user_info_logic():
     collect_user_info(mock_context, 80.0, 75.0, 180.0, 30, "male", "active", "none")
     assert "user_info" in mock_context.state
     assert "weight=80.0" in mock_context.state["user_info"]
+
+def test_save_research_findings_logic():
+    mock_context = MagicMock()
+    mock_context.state = {}
+    save_research_findings(mock_context, "Sample findings")
+    assert mock_context.state["research_findings"] == "Sample findings"
+
+def test_save_user_intent_logic():
+    mock_context = MagicMock()
+    mock_context.state = {}
+    save_user_intent(mock_context, "weight_loss")
+    assert mock_context.state["user_intent"] == "weight_loss"
 
 # Model Test
 def test_user_info_schema():
